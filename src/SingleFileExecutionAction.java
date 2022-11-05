@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.util.Scanner;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -78,6 +79,7 @@ public class SingleFileExecutionAction extends AnAction {
         int exeExistFlag = EXE_NOT_EXIST;
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
+            /*
             Matcher m = pattern.matcher(line);
             if (m.find()) {
                 //String existingExeName = m.group(1);
@@ -87,6 +89,11 @@ public class SingleFileExecutionAction extends AnAction {
                 } else {
                     exeExistFlag = EXE_EXIST_DIFFERENT_SOURCE;
                 }
+                break;
+            }*/
+
+            if (line.contains(relativeSourcePath)) {
+                exeExistFlag = EXE_EXIST_SAME_SOURCE;
                 break;
             }
         }
@@ -196,7 +203,8 @@ public class SingleFileExecutionAction extends AnAction {
 
     /** building add_executable(exeName sourceFilePath) statement */
     private String constructAddExecutable(String exeName, String sourceFilePath) {
-        return "add_executable("+ exeName + " " + quotingSourcePath(sourceFilePath) +")";
+        // add quote in case of file name with space
+        return "add_executable(\""+ exeName + "\" \"" + sourceFilePath +"\")";
     }
 
     /** building set_target_properties(exeName PROPERTIES RUNTIME_OUTPUT_DIRECTORY ourputDir) statement */
@@ -209,7 +217,11 @@ public class SingleFileExecutionAction extends AnAction {
         String newExeName;
         /* %FILENAME% replacement */
         newExeName = exeName.replace(SingleFileExecutionConfig.EXECUTABLE_NAME_FILENAME, sourceFile.getNameWithoutExtension());
-        return newExeName;
+
+
+        // every insert we use a uuid as target name in case file name contains Chinese
+        return UUID.randomUUID().toString().replaceAll("-", "");
+        // return newExeName;
     }
 
     private String buildRuntimeOutputDirectory() {
